@@ -13,7 +13,7 @@ export default function Home() {
     getUserId().then(setUserId);
   }, []);
 
-  async function checkIn() {
+  async function submitCheckIn() {
     if (!userId || !status) return;
 
     await supabase.from("checkins").insert({
@@ -23,37 +23,54 @@ export default function Home() {
 
     await incrementStreak(userId);
 
-    alert("Poop logged 💩 — streak up!");
+    alert("Poop logged 💩 — streak increased!");
   }
+
+  const options = [
+    { id: "good", emoji: "💚", label: "Good Poop" },
+    { id: "ok", emoji: "🙂", label: "Okay Poop" },
+    { id: "struggle", emoji: "😣", label: "Struggle Poop" },
+    { id: "legend", emoji: "👑", label: "Poop Legend" },
+  ];
 
   return (
     <div className="min-h-screen bg-neutral-900 text-white flex flex-col items-center pt-10">
 
-      <h1 className="text-2xl font-bold mb-2">
+      <h1 className="text-2xl font-bold mb-1">
         Daily Poop Check-in 💩
       </h1>
 
       <p className="opacity-70 mb-6">
-        Log your poop and grow your streak 🚀
+        Choose your poop vibe for today 🚀
       </p>
 
-      <div className="bg-neutral-800 px-6 py-6 rounded-2xl shadow-lg w-[90%] max-w-sm flex flex-col items-center">
-        
-        <select
-          className="bg-neutral-700 px-4 py-2 rounded-xl mb-4 w-full text-center"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          <option value="">Select poop status</option>
-          <option value="good">💚 Good poop</option>
-          <option value="ok">🙂 Okay poop</option>
-          <option value="struggle">😣 Struggle</option>
-          <option value="legend">👑 Poop Legend</option>
-        </select>
+      <div className="bg-neutral-800 px-6 py-6 rounded-2xl shadow-xl w-[90%] max-w-sm flex flex-col items-center">
+
+        <div className="grid grid-cols-2 gap-3 mb-4 w-full">
+          {options.map(o => (
+            <button
+              key={o.id}
+              onClick={() => setStatus(o.id)}
+              className={`flex flex-col items-center justify-center py-3 rounded-2xl border transition-all
+                ${status === o.id
+                  ? "bg-amber-400 text-black border-amber-500 scale-105"
+                  : "bg-neutral-700 border-neutral-600"
+                }`}
+            >
+              <span className="text-3xl">{o.emoji}</span>
+              <span className="text-xs mt-1">{o.label}</span>
+            </button>
+          ))}
+        </div>
 
         <button
-          onClick={checkIn}
-          className="bg-amber-500 px-6 py-2 rounded-xl text-black font-bold w-full"
+          onClick={submitCheckIn}
+          disabled={!status}
+          className={`w-full px-6 py-2 rounded-xl font-bold
+            ${status
+              ? "bg-amber-500 text-black"
+              : "bg-neutral-600 text-neutral-300"
+            }`}
         >
           Submit
         </button>
@@ -65,7 +82,6 @@ export default function Home() {
       >
         View Leaderboard 🏆
       </Link>
-
     </div>
   );
 }
