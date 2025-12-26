@@ -1,15 +1,13 @@
 import "./globals.css";
-import Nav from "./components/Nav";
-import { LangProvider } from "./lang-provider";
+import { AuthProvider } from "./providers/AuthProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-neutral-900 text-white">
-        <LangProvider>
+      <body>
+        <AuthProvider>
           {children}
-          <Nav />
-        </LangProvider>
+        </AuthProvider>
       </body>
     </html>
   );
