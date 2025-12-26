@@ -13,11 +13,20 @@ export default function Leaderboard() {
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
-        .from("leaderboard_view")
-        .select("*")
-        .order("count", { ascending: false });
+        .from("checkins")
+        .select("user_id, mood");
 
-      setRows(data || []);
+      const counts: Record<string, number> = {};
+
+      (data || []).forEach((r) => {
+        counts[r.user_id] = (counts[r.user_id] || 0) + 1;
+      });
+
+      const sorted = Object.entries(counts)
+        .map(([user_id, count]) => ({ user_id, count }))
+        .sort((a, b) => b.count - a.count);
+
+      setRows(sorted);
     };
 
     load();
@@ -42,11 +51,15 @@ export default function Leaderboard() {
             <span>
               #{i + 1} — {r.user_id.slice(0, 6)}…
             </span>
-            <span className="text-amber-300">
-              {r.count} {t("poops", "次便便")}
-            </span>
+            <span className="text-amber-300">{r.count}</span>
           </div>
         ))}
+
+        {rows.length === 0 && (
+          <p className="text-neutral-400 text-center">
+            {t("No rankings yet", "暂无排行")}
+          </p>
+        )}
       </div>
     </main>
   );
