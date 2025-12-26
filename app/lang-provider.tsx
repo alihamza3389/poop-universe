@@ -1,45 +1,37 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
-type Lang = "cn" | "en";
+type Lang = "en" | "zh";
 
-type LangContextType = {
+const LangContext = createContext<{
   lang: Lang;
   setLang: (v: Lang) => void;
-  toggleLang: () => void;
-};
+}>({
+  lang: "en",
+  setLang: () => {},
+});
 
-const LangContext = createContext<LangContextType | null>(null);
+export function LangProvider({ children }: { children: ReactNode }) {
+  const [lang, setLang] = useState<Lang>(
+    (typeof window !== "undefined" &&
+      (localStorage.getItem("poop_lang") as Lang)) || "en"
+  );
 
-export function LangProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("cn");
-
-  // Load stored language
-  useEffect(() => {
-    const saved = localStorage.getItem("poop_lang");
-    if (saved === "en" || saved === "cn") setLangState(saved);
-  }, []);
-
-  function setLang(v: Lang) {
-    setLangState(v);
-    localStorage.setItem("poop_lang", v);
-    window.dispatchEvent(new Event("poop_lang_changed"));
-  }
-
-  function toggleLang() {
-    setLang(lang === "cn" ? "en" : "cn");
+  function update(v: Lang) {
+    setLang(v);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("poop_lang", v);
+    }
   }
 
   return (
-    <LangContext.Provider value={{ lang, setLang, toggleLang }}>
+    <LangContext.Provider value={{ lang, setLang: update }}>
       {children}
     </LangContext.Provider>
   );
 }
 
 export function useLang() {
-  const ctx = useContext(LangContext);
-  if (!ctx) throw new Error("useLang must be used inside LangProvider");
-  return ctx;
+  return useContext(LangContext);
 }
