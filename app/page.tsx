@@ -1,87 +1,69 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { getUserId, incrementStreak } from "@/lib/user";
-import Link from "next/link";
+import { getUserId } from "@/lib/user";
+import { useLang } from "@/app/lang-provider";
 
 export default function Home() {
-  const [userId, setUserId] = useState<string | null>(null);
+  const { lang } = useLang();
+  const t = (en: string, zh: string) => (lang === "zh" ? zh : en);
+
   const [status, setStatus] = useState("");
 
-  useEffect(() => {
-    getUserId().then(setUserId);
-  }, []);
-
-  async function submitCheckIn() {
-    if (!userId || !status) return;
-
-    await supabase.from("checkins").insert({
-      user_id: userId,
-      status,
-    });
-
-    await incrementStreak(userId);
-
-    alert("Poop logged 💩 — streak increased!");
-  }
-
-  const options = [
-    { id: "good", emoji: "💚", label: "Good Poop" },
-    { id: "ok", emoji: "🙂", label: "Okay Poop" },
-    { id: "struggle", emoji: "😣", label: "Struggle Poop" },
-    { id: "legend", emoji: "👑", label: "Poop Legend" },
+  const statuses = [
+    t("good", "好"),
+    t("ok", "一般"),
+    t("struggle", "艰难"),
+    t("legend", "传奇"),
   ];
 
-  return (
-    <div className="min-h-screen bg-neutral-900 text-white flex flex-col items-center pt-10">
+  const submit = async () => {
+    if (!status) return;
 
-      <h1 className="text-2xl font-bold mb-1">
-        Daily Poop Check-in 💩
+    const userId = await getUserId();
+    await supabase.from("entries").insert({ user_id: userId, status });
+
+    alert(t("Poop logged successfully!", "便便记录成功！"));
+    setStatus("");
+  };
+
+  return (
+    <main className="min-h-screen flex flex-col items-center pt-16 px-4 text-center">
+      <h1 className="text-xl font-bold">
+        {t("Daily Poop Check-in 💩", "每日便便打卡 💩")}
       </h1>
 
-      <p className="opacity-70 mb-6">
-        Choose your poop vibe for today 🚀
+      <p className="text-neutral-400 mb-6">
+        {t("Log your poop and grow your streak 🚀", "记录便便，解锁连续成就 🚀")}
       </p>
 
-      <div className="bg-neutral-800 px-6 py-6 rounded-2xl shadow-xl w-[90%] max-w-sm flex flex-col items-center">
-
-        <div className="grid grid-cols-2 gap-3 mb-4 w-full">
-          {options.map(o => (
-            <button
-              key={o.id}
-              onClick={() => setStatus(o.id)}
-              className={`flex flex-col items-center justify-center py-3 rounded-2xl border transition-all
-                ${status === o.id
-                  ? "bg-amber-400 text-black border-amber-500 scale-105"
-                  : "bg-neutral-700 border-neutral-600"
-                }`}
-            >
-              <span className="text-3xl">{o.emoji}</span>
-              <span className="text-xs mt-1">{o.label}</span>
-            </button>
+      <div className="bg-neutral-900 px-4 py-4 rounded-2xl w-full max-w-md">
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="w-full bg-neutral-800 rounded-xl px-3 py-2"
+        >
+          <option value="">{t("Select poop status", "选择便便状态")}</option>
+          {statuses.map((s) => (
+            <option key={s}>{s}</option>
           ))}
-        </div>
+        </select>
 
         <button
-          onClick={submitCheckIn}
-          disabled={!status}
-          className={`w-full px-6 py-2 rounded-xl font-bold
-            ${status
-              ? "bg-amber-500 text-black"
-              : "bg-neutral-600 text-neutral-300"
-            }`}
+          onClick={submit}
+          className="w-full bg-amber-500 hover:bg-amber-400 mt-3 py-2 rounded-xl font-bold"
         >
-          Submit
+          {t("Submit", "提交")}
         </button>
       </div>
 
-      <Link
+      <a
         href="/leaderboard"
-        className="mt-6 underline text-amber-300"
+        className="mt-4 underline text-amber-300"
       >
-        View Leaderboard 🏆
-      </Link>
-    </div>
+        {t("View Leaderboard 🏆", "查看排行榜 🏆")}
+      </a>
+    </main>
   );
 }
