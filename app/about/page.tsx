@@ -18,8 +18,8 @@ export default function AboutPage() {
     },
   };
 
-  const t = text[lang];
-
+  const t = (en: string, zh: string) => (lang === "zh" ? zh : en);
+  
   return (
     <main className="min-h-screen flex justify-center pt-16 px-4 text-center">
       <div className="max-w-md w-full">
