@@ -25,7 +25,23 @@ export default function HistoryPage() {
     };
 
     load();
-  }, []);
+  }, []); // load once — translation happens in UI
+  
+
+  const moodLabel = (mood: string) => {
+    switch (mood) {
+      case "good":
+        return t("good", "好");
+      case "ok":
+        return t("ok", "一般");
+      case "struggle":
+        return t("struggle", "艰难");
+      case "legend":
+        return t("legend", "传奇");
+      default:
+        return mood;
+    }
+  };
 
   return (
     <main className="min-h-screen pt-16 px-4 flex flex-col items-center">
@@ -39,9 +55,12 @@ export default function HistoryPage() {
             key={r.id}
             className="bg-neutral-800 px-4 py-3 rounded-xl flex justify-between"
           >
-            <span>{r.mood}</span>
+            <span>{moodLabel(r.mood)}</span>
+
             <span className="text-neutral-400">
-              {new Date(r.created_at).toLocaleString()}
+              {new Date(r.created_at).toLocaleString(
+                lang === "zh" ? "zh-CN" : "en-US"
+              )}
             </span>
           </div>
         ))}
