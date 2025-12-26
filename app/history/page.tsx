@@ -1,76 +1,53 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { getUserId } from "@/lib/user";
-import { useLang } from "@/app/lang-provider";
+import { useAuth } from "@/app/providers/AuthProvider";
+import { supabaseBrowser } from "@/lib/supabase-browser";
+import { getGuestEntries } from "@/lib/guest-store";
+
+type Entry = { mood: string; created_at: string };
 
 export default function HistoryPage() {
-  const { lang } = useLang();
-  const t = (en: string, zh: string) => (lang === "zh" ? zh : en);
-
-  const [rows, setRows] = useState<any[]>([]);
+  const { user } = useAuth();
+  const supabase = supabaseBrowser();
+  const [entries, setEntries] = useState<Entry[]>([]);
 
   useEffect(() => {
-    const load = async () => {
-      const userId = await getUserId();
+    if (!user) {
+      setEntries(getGuestEntries());
+      return;
+    }
 
+    const load = async () => {
       const { data } = await supabase
         .from("checkins")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      setRows(data || []);
+      setEntries((data as Entry[]) || []);
     };
 
     load();
-  }, []); // load once — translation happens in UI
-  
-
-  const moodLabel = (mood: string) => {
-    switch (mood) {
-      case "good":
-        return t("good", "好");
-      case "ok":
-        return t("ok", "一般");
-      case "struggle":
-        return t("struggle", "艰难");
-      case "legend":
-        return t("legend", "传奇");
-      default:
-        return mood;
-    }
-  };
+  }, [user]);
 
   return (
-    <main className="min-h-screen pt-16 px-4 flex flex-col items-center">
-      <h1 className="text-lg font-bold mb-4">
-        {t("Poop History", "便便记录")}
+    <main className="min-h-screen px-4 pt-16">
+      <h1 className="text-xl font-bold text-center">
+        {user ? "Your Poop History 📜" : "Guest History 📜"}
       </h1>
 
-      <div className="w-full max-w-md space-y-2">
-        {rows.map((r) => (
-          <div
-            key={r.id}
-            className="bg-neutral-800 px-4 py-3 rounded-xl flex justify-between"
-          >
-            <span>{moodLabel(r.mood)}</span>
+      {entries.map((e, i) => (
+        <div key={i} className="bg-neutral-800 p-3 my-2 rounded">
+          {e.mood} — {new Date(e.created_at).toLocaleString()}
+        </div>
+      ))}
 
-            <span className="text-neutral-400">
-              {new Date(r.created_at).toLocaleString(
-                lang === "zh" ? "zh-CN" : "en-US"
-              )}
-            </span>
-          </div>
-        ))}
-
-        {rows.length === 0 && (
-          <p className="text-neutral-400 text-center">
-            {t("No history yet", "暂无记录")}
-          </p>
-        )}
-      </div>
+      {!entries.length && (
+        <p className="text-neutral-400 text-center mt-6">
+          No entries yet 💩
+        </p>
+      )}
     </main>
   );
 }

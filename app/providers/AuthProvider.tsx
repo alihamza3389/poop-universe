@@ -15,17 +15,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserType>(null);
 
   useEffect(() => {
-    const getUser = async () => {
+    const loadUser = async () => {
       const { data } = await supabase.auth.getUser();
-      setUser(data.user ? { id: data.user.id, email: data.user.email } : null);
+      setUser(
+        data?.user
+          ? { id: data.user.id, email: data.user.email ?? null }
+          : null
+      );
     };
 
-    getUser();
-    const sub = supabase.auth.onAuthStateChange(() => getUser());
-    return () => sub.data.subscription.unsubscribe();
+    loadUser();
+
+    const { data: sub } = supabase.auth.onAuthStateChange(() => loadUser());
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => useContext(AuthContext);
